@@ -1,4 +1,4 @@
-import { ddbDocClient } from "../config/DynamoClient.js"
+import { ddbDocClient } from "../config/dynamoClientgit add ..js"
 import { PutCommand, UpdateCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import sendotpMail from "../utils/sendOtpMail.js";
 import jwt from "jsonwebtoken";
