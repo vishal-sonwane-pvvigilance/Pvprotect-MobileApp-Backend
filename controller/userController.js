@@ -1,5 +1,5 @@
 import { ddbDocClient } from "../config/dynamoClient.js";
-import { PutCommand, UpdateCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, UpdateCommand, QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import sendotpMail from "../utils/sendOtpMail.js";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
@@ -113,18 +113,17 @@ export const verifyOtp = async (payload) => {
 
     if (!clientId || !otp) return { success: false, message: "clientId and OTP are required" };
 
-    const res = await ddbDocClient.send(new QueryCommand({
+    const res = await ddbDocClient.send(new GetCommand({
       TableName,
-      KeyConditionExpression: "clientId = :c",
-      ExpressionAttributeValues: { ":c": clientId }
+      Key: { clientId }
     }));
+    
+    const user = res.Item
 
-    const user = res.Items?.[0];
-
-    if (!user)           return { success: false, message: "User not found" };
-    if (!user.otp)       return { success: false, message: "OTP not generated" };
+    if (!user) return { success: false, message: "User not found" };
+    if (!user.otp) return { success: false, message: "OTP not generated" };
     if (Date.now() > user.otpExpiry) return { success: false, message: "OTP expired" };
-    if (user.otp !== otp)            return { success: false, message: "Invalid OTP" };
+    if (user.otp !== otp) return { success: false, message: "Invalid OTP" };
 
     // ✅ OTP correct → mark verified, clear OTP
     await ddbDocClient.send(new UpdateCommand({
