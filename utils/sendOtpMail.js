@@ -4,15 +4,25 @@ dotenv.config();
 
 
 
- const sendotpMail = async (email,otp)=>{
-    try{
+const sendotpMail = async (email, otp) => {
+    try {
         const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth:{
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false,
+            auth: {
                 user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
+                pass: process.env.EMAIL_PASS,
+            },
         });
+
+        console.log('EMAIL_USER',process.env.EMAIL_USER,)
+        console.log('EMAIL_PASS',process.env.EMAIL_PASS,)
+
+        // ✅ ADD THIS — reveals exact error on Render
+        await transporter.verify();
+        console.log("✅ SMTP connection verified");
+
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
@@ -26,16 +36,21 @@ dotenv.config();
                 </div>
             `
         };
-console.log("otp", otp);
+
+        console.log("Sending OTP to:", email);
         await transporter.sendMail(mailOptions);
+        console.log("✅ OTP email sent successfully");
         return true;
-        
 
     } catch (error) {
-        console.error("Error sending OTP email:", error);
+        // ✅ Log the full error, not just message
+        console.error("❌ Email error code:", error.code);
+        console.error("❌ Email error message:", error.message);
+        console.error("❌ Full error:", JSON.stringify(error, null, 2));
         throw new Error("Failed to send OTP email");
     }
 }
+
 
 console.log("EMAIL:", process.env.EMAIL_USER);
 console.log("PASS:", process.env.EMAIL_PASS ? "Loaded" : "Missing");

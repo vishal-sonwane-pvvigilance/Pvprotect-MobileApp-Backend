@@ -89,8 +89,6 @@ export const loginClient = async (req, res, next) => {
 
     res
       .status(200)
-      // .cookie("clientAccessToken", accessToken, options)
-      // .cookie("clientRefreshToken", refreshToken, options)
       .json(
         new ApiResponse(
           200,
@@ -100,6 +98,8 @@ export const loginClient = async (req, res, next) => {
             email: client.email,
             contact_number: client.contact_number,
             adminReference: client.adminReference,
+            accessToken,   // ✅ ADD THIS
+            refreshToken,  // ✅ ADD THIS
           },
           "Client logged in successfully"
         )
