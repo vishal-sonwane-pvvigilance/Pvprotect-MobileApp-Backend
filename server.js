@@ -18,9 +18,9 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 
 
-app.use('/api/users', userRoutes);
-app.use('/api/client', clientUserRoutes);
-app.use('/api', plantRoutes)
+app.use('/api/v2/users', userRoutes);
+app.use('/api/v2/client', clientUserRoutes);
+app.use('/api/v2', plantRoutes)
 
 // Test route
 app.get("/test", (req, res) => {
