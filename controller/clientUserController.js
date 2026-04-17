@@ -81,7 +81,7 @@ export const loginClient = async (req, res, next) => {
     );
 
     if (!Items.length || !(await bcrypt.compare(password, Items[0].password))) {
-      return next(new ApiError(401, "Invalid Client ID or password"));
+      res.status(400).json("Invalid Client ID or password");
     }
 
     const client = Items[0];
