@@ -7,6 +7,7 @@ import { generateTokens } from "../middleware/AuthMiddleware.js";
 
 const ClientsTable = process.env.CLIENTS_TABLE_NAME;
 console.log(ClientsTable);
+
 export const registerClient = async (req, res, next) => {
   const { name, email, contact_number, password, adminReference } = req.body;
 
@@ -43,6 +44,7 @@ export const registerClient = async (req, res, next) => {
     await dynamoDb.send(
       new PutCommand({ TableName: ClientsTable, Item: newClient })
     );
+
     const { accessToken, refreshToken } = generateTokens(newClient);
 
     res.status(201).json(
@@ -68,8 +70,9 @@ export const registerClient = async (req, res, next) => {
 export const loginClient = async (req, res, next) => {
   const { clientId, password } = req.body;
 
-  if (!clientId || !password)
+  if (!clientId || !password) {
     return next(new ApiError(400, "Client ID and password are required"));
+  }
 
   try {
     const { Items } = await dynamoDb.send(
@@ -80,31 +83,38 @@ export const loginClient = async (req, res, next) => {
       })
     );
 
-    if (!Items.length || !(await bcrypt.compare(password, Items[0].password))) {
-      res.status(400).json("Invalid Client ID or password");
+    // ✅ FIX 1: Check if client exists first
+    if (!Items || Items.length === 0) {
+      return next(new ApiError(401, "Invalid Client ID or password"));
+    }
+
+    // ✅ FIX 2: Check password separately — prevents fallthrough crash
+    const isPasswordValid = await bcrypt.compare(password, Items[0].password);
+    if (!isPasswordValid) {
+      return next(new ApiError(401, "Invalid Client ID or password"));
     }
 
     const client = Items[0];
     const { accessToken, refreshToken } = generateTokens(client);
 
-    res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          {
-            clientId: client.clientId,
-            name: client.name,
-            email: client.email,
-            contact_number: client.contact_number,
-            adminReference: client.adminReference,
-            accessToken,   // ✅ ADD THIS
-            refreshToken,  // ✅ ADD THIS
-          },
-          "Client logged in successfully"
-        )
-      );
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          clientId: client.clientId,
+          name: client.name,
+          email: client.email,
+          contact_number: client.contact_number,
+          adminReference: client.adminReference,
+          accessToken,
+          refreshToken,
+        },
+        "Client logged in successfully"
+      )
+    );
   } catch (error) {
     next(new ApiError(500, `Failed to login client: ${error.message}`));
-  }
+  } 
+
+  
 };
